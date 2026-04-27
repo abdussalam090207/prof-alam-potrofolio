@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Not Found Page</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { width: 100%; height: 100%; }
+        body { position: relative; overflow: hidden; }
+        .astronot-container { width: 100%; height: 100%; overflow: hidden; }
+        .astronot-container img { width: 100%; height: 100%; object-fit: cover; }
+        .text-container {
+            position: absolute;
+            left: 60px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: white;
+            z-index: 10;
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.7);
+            font-family: Arial, sans-serif;
+            font-weight: 300;
+            letter-spacing: 1px;
+        }
+
+        .oops {
+            font-size: clamp(32px, 4vw, 40px);
+            font-weight: 400;
+            margin-bottom: 10px;
+            color: #ffffff;
+        }
+
+        .error-code {
+            font-size: clamp(120px, 12vw, 200px);
+            font-weight: 300;
+            margin-bottom: 30px;
+            color: #ffffff;
+            line-height: 1;
+        }
+
+        .error-message {
+            font-size: clamp(14px, 1.5vw, 16px);
+            line-height: 1.6;
+            color: #e0e0e0;
+            max-width: 400px;
+            font-weight: 300;
+        }
+
+        .terminal-box {
+            margin-top: 28px;
+            width: clamp(320px, 35vw, 420px);
+            height: 160px;
+            overflow: hidden;
+            position: relative;
+            font-family: 'Courier New', monospace;
+            font-size: 11.5px;
+            line-height: 1.55;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 8px;
+            padding: 12px;
+            backdrop-filter: blur(2px);
+            border: 0px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .terminal-scroll {
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            opacity: 0.85;
+            will-change: transform;
+        }
+
+        .line {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .green { color: #39ff14; }
+        .white { color: #e8e8e8; }
+        .red { color: #ff4444; }
+        .yellow { color: #ffcc00; }
+
+        .loading-dots::after {
+            content: '';
+            animation: loading 1.5s infinite;
+        }
+
+        @keyframes loading {
+            0%, 20% { content: ''; }
+            40% { content: '.'; }
+            60% { content: '..'; }
+            80%, 100% { content: '...'; }
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .text-container {
+                left: 20px;
+                right: 20px;
+                top: 50%;
+                transform: translateY(-50%);
+                text-align: center;
+            }
+
+            .oops {
+                font-size: 28px;
+            }
+
+            .error-code {
+                font-size: 80px;
+                margin-bottom: 20px;
+            }
+
+            .error-message {
+                font-size: 14px;
+                max-width: 100%;
+            }
+
+            .terminal-box {
+                width: 100%;
+                height: 120px;
+                margin-top: 20px;
+                font-size: 10px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .text-container {
+                left: 15px;
+                right: 15px;
+            }
+
+            .oops {
+                font-size: 24px;
+            }
+
+            .error-code {
+                font-size: 60px;
+            }
+
+            .terminal-box {
+                height: 100px;
+                font-size: 9px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="astronot-container">
+        <img src="Asset/Astroonot.png" alt="Astronot">
+    </div>
+    <div class="text-container">
+        <div class="oops">Oops!</div>
+        <div class="error-code">404</div>
+        <p class="error-message">We apologize, but the page you are trying to access is currently under maintenance.</p>
+        <div class="terminal-box">
+            <div class="fade-top"></div>
+            <div class="terminal-scroll" id="termScroll"></div>
+        </div>
+    </div>
+
+    <script>
+        const lines = [
+            { text: '[ SYS ] Initializing system kernel', cls: 'white', type: 'loading', delay: 200 },
+            { text: '[ OK  ] Mounting root filesystem /dev/sda1', cls: 'green', type: 'normal', delay: 150 },
+            { text: '[ OK  ] Starting udev daemon', cls: 'green', type: 'normal', delay: 100 },
+            { text: '[ WARN] udev: device node mismatch detected', cls: 'yellow', type: 'normal', delay: 200 },
+            { text: '[ OK  ] Loading network interfaces eth0', cls: 'green', type: 'loading', delay: 300 },
+            { text: '[ ERR ] eth0: connection timeout after 30s', cls: 'red', type: 'normal', delay: 100 },
+            { text: '[ SYS ] Checking /etc/fstab entries', cls: 'white', type: 'loading', delay: 400 },
+            { text: '[ OK  ] /proc mounted successfully', cls: 'green', type: 'normal', delay: 80 },
+            { text: '[ OK  ] /sys mounted successfully', cls: 'green', type: 'normal', delay: 80 },
+            { text: '[ WARN] /tmp: disk usage exceeds 80% threshold', cls: 'yellow', type: 'normal', delay: 150 },
+            { text: '[ OK  ] Spawning getty on tty1', cls: 'green', type: 'normal', delay: 100 },
+            { text: '[ SYS ] Loading kernel modules', cls: 'white', type: 'loading', delay: 600 },
+            { text: '[ OK  ] Module: ext4 loaded', cls: 'green', type: 'normal', delay: 120 },
+            { text: '[ OK  ] Module: ata_piix loaded', cls: 'green', type: 'normal', delay: 120 },
+            { text: '[ ERR ] Module: nvidia.ko failed to load', cls: 'red', type: 'normal', delay: 200 },
+            { text: '[ WARN] Falling back to nouveau driver', cls: 'yellow', type: 'normal', delay: 150 },
+            { text: '[ SYS ] Starting system logger rsyslogd', cls: 'white', type: 'loading', delay: 350 },
+            { text: '[ OK  ] rsyslogd started with pid 847', cls: 'green', type: 'normal', delay: 100 },
+            { text: '[ OK  ] cron daemon started successfully', cls: 'green', type: 'normal', delay: 100 },
+            { text: '[ WARN] cron: 2 jobs failed last execution', cls: 'yellow', type: 'normal', delay: 180 },
+            { text: '[ SYS ] Resolving DNS nameservers', cls: 'white', type: 'loading', delay: 500 },
+            { text: '[ ERR ] DNS: failed to reach 8.8.8.8 (timeout)', cls: 'red', type: 'normal', delay: 100 },
+            { text: '[ ERR ] DNS: failed to reach 1.1.1.1 (no route)', cls: 'red', type: 'normal', delay: 100 },
+            { text: '[ SYS ] Retrying with fallback resolver', cls: 'white', type: 'loading', delay: 300 },
+            { text: '[ OK  ] Fallback resolver responded', cls: 'green', type: 'normal', delay: 150 },
+            { text: '[ OK  ] Hostname: srv-node-404 set', cls: 'green', type: 'normal', delay: 100 },
+            { text: '[ SYS ] Launching httpd service', cls: 'white', type: 'loading', delay: 450 },
+            { text: '[ OK  ] httpd: binding to port 80', cls: 'green', type: 'normal', delay: 120 },
+            { text: '[ ERR ] httpd: SSL cert expired 2024-11-01', cls: 'red', type: 'normal', delay: 150 },
+            { text: '[ WARN] SSL: running in degraded mode', cls: 'yellow', type: 'normal', delay: 180 },
+            { text: '[ SYS ] Checking process table', cls: 'white', type: 'loading', delay: 250 },
+            { text: '[ OK  ] 214 processes active', cls: 'green', type: 'normal', delay: 100 },
+            { text: '[ WARN] zombie processes detected: 3', cls: 'yellow', type: 'normal', delay: 150 },
+            { text: '[ SYS ] Scanning /var/log for errors', cls: 'white', type: 'loading', delay: 700 },
+            { text: '[ ERR ] syslog: 47 critical entries found', cls: 'red', type: 'normal', delay: 120 },
+            { text: '[ SYS ] Running fsck on /dev/sdb1', cls: 'white', type: 'loading', delay: 800 },
+            { text: '[ OK  ] fsck: no errors found', cls: 'green', type: 'normal', delay: 100 },
+            { text: '[ WARN] disk /dev/sdb1: read latency >120ms', cls: 'yellow', type: 'normal', delay: 150 },
+            { text: '[ OK  ] swap partition active: 2.0 GB', cls: 'green', type: 'normal', delay: 100 },
+            { text: '[ WARN] swap usage: 78% — consider upgrade', cls: 'yellow', type: 'normal', delay: 180 },
+            { text: '[ SYS ] Initializing firewall rules', cls: 'white', type: 'loading', delay: 550 },
+            { text: '[ OK  ] iptables: 42 rules loaded', cls: 'green', type: 'normal', delay: 120 },
+            { text: '[ ERR ] rule #17: invalid destination addr', cls: 'red', type: 'normal', delay: 150 },
+            { text: '[ SYS ] Skipping malformed rule, continuing', cls: 'white', type: 'normal', delay: 200 },
+            { text: '[ OK  ] firewall active in permissive mode', cls: 'green', type: 'normal', delay: 100 },
+            { text: '[ SYS ] Contacting maintenance server', cls: 'white', type: 'loading', delay: 900 },
+            { text: '[ ERR ] 404 Not Found: /page requested', cls: 'red', type: 'normal', delay: 120 },
+            { text: '[ ERR ] Remote server returned no content', cls: 'red', type: 'normal', delay: 120 },
+            { text: '[ WARN] Retry attempt 1/3', cls: 'yellow', type: 'loading', delay: 300 },
+            { text: '[ ERR ] Retry 1 failed: connection refused', cls: 'red', type: 'normal', delay: 100 },
+            { text: '[ WARN] Retry attempt 2/3', cls: 'yellow', type: 'loading', delay: 300 },
+            { text: '[ ERR ] Retry 2 failed: host unreachable', cls: 'red', type: 'normal', delay: 100 },
+            { text: '[ WARN] Retry attempt 3/3', cls: 'yellow', type: 'loading', delay: 300 },
+            { text: '[ ERR ] All retries exhausted. Page offline.', cls: 'red', type: 'normal', delay: 150 },
+            { text: '[ SYS ] Entering maintenance standby mode', cls: 'white', type: 'loading', delay: 400 },
+            { text: '[ OK  ] Standby mode activated', cls: 'green', type: 'normal', delay: 100 },
+        ];
+
+        const scroll = document.getElementById('termScroll');
+        let lineIndex = 0;
+        let allLines = [];
+        let currentY = 0;
+        let targetY = 0;
+        let animationId = null;
+        let isLoading = false;
+        let loadingElement = null;
+        let loadingStartTime = 0;
+        const lineHeight = 18;
+        const boxHeight = 160;
+        const visibleLines = Math.floor(boxHeight / lineHeight);
+
+        function smoothScroll() {
+            const ease = 0.08;
+            currentY += (targetY - currentY) * ease;
+
+            if (Math.abs(targetY - currentY) < 0.1) {
+                currentY = targetY;
+            }
+
+            scroll.style.transform = `translateY(${currentY}px)`;
+
+            if (currentY !== targetY) {
+                animationId = requestAnimationFrame(smoothScroll);
+            }
+        }
+
+        function addLine() {
+            if (isLoading) return; // Tunggu loading selesai
+
+            const data = lines[lineIndex % lines.length];
+
+            if (data.type === 'loading') {
+                // Buat loading line dengan animasi dots
+                isLoading = true;
+                loadingStartTime = Date.now();
+
+                const div = document.createElement('div');
+                div.className = 'line ' + data.cls + ' loading-dots';
+                div.textContent = data.text;
+                scroll.appendChild(div);
+                loadingElement = div;
+                allLines.push(div);
+
+                // Set timeout untuk menyelesaikan loading
+                setTimeout(() => {
+                    if (loadingElement) {
+                        loadingElement.classList.remove('loading-dots');
+                        isLoading = false;
+                        loadingElement = null;
+                        lineIndex++;
+                        updateScroll();
+                    }
+                }, data.delay);
+
+            } else {
+                // Line normal
+                const div = document.createElement('div');
+                div.className = 'line ' + data.cls;
+                div.textContent = data.text;
+                scroll.appendChild(div);
+                allLines.push(div);
+                lineIndex++;
+
+                // Delay kecil untuk line normal
+                setTimeout(updateScroll, data.delay);
+            }
+
+            // Hapus line yang sudah tidak terlihat
+            if (allLines.length > visibleLines + 6) {
+                const removeCount = allLines.length - visibleLines - 4;
+                for (let i = 0; i < removeCount; i++) {
+                    if (allLines[0]) {
+                        scroll.removeChild(allLines[0]);
+                        allLines.shift();
+                        currentY -= lineHeight;
+                        targetY -= lineHeight;
+                    }
+                }
+            }
+        }
+
+        function updateScroll() {
+            const totalHeight = allLines.length * lineHeight;
+            targetY = Math.max(0, totalHeight - boxHeight + lineHeight);
+
+            if (!animationId) {
+                animationId = requestAnimationFrame(smoothScroll);
+            }
+        }
+
+        function animate() {
+            // Cek apakah sudah waktunya menambah line baru
+            if (!isLoading && Date.now() - (allLines.length > 0 ? allLines[allLines.length - 1].timestamp || 0 : 0) > 100) {
+                addLine();
+                if (allLines.length > 0 && !allLines[allLines.length - 1].timestamp) {
+                    allLines[allLines.length - 1].timestamp = Date.now();
+                }
+            }
+            requestAnimationFrame(animate);
+        }
+
+        // Mulai animasi
+        animate();
+    </script>
+</body>
+</html>
